@@ -1,4 +1,5 @@
 class PasswordResetsController < ApplicationController
+
   before_filter :check_reset_expiration, only: [:update, :edit]
 
   def create
@@ -25,4 +26,5 @@ class PasswordResetsController < ApplicationController
   def check_reset_expiration
     password_reset_expired?(user)
   end
+
 end
