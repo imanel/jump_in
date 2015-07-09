@@ -6,15 +6,21 @@ module LetMeIn
     end
 
     def login(user:, password:)
+      if user && user.authenticate(password)
+        cookies.permanent[:user_id] = user.id
+      end
     end
 
     def logout
+      cookies[:user_id] = nil
     end
 
     def current_user
+      @current_user ||= User.find_by_id(session[:user_id] || cookies[:user_id])
     end
 
     def logged_in?
+      !!current_user
     end
   end
 end
