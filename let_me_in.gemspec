@@ -7,8 +7,8 @@ require "let_me_in/version"
 Gem::Specification.new do |s|
   s.name        = "let_me_in"
   s.version     = LetMeIn::VERSION
-  s.authors     = ["KatarzynaT-B"]
-  s.email       = ["kturbiasz@gmail.com"]
+  s.authors     = ["KatarzynaT-B", "moniikag"]
+  s.email       = ["kturbiasz@gmail.com", "monikaglier@gmail.com"]
   s.homepage    = "TODO"
   s.summary     = "TODO: Summary of LetMeIn."
   s.description = "TODO: Description of LetMeIn."
