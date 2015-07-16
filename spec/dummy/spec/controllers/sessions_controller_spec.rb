@@ -5,19 +5,25 @@ describe SessionsController do
   let(:valid_session) { { user_id: user.id} }
 
   context "POST create" do
-    it "sets cookies[:user_id]" do
+    it "sets cookies[:user_id] if valid user params given, redirects" do
       post :create, { session: { email: user.email, password: user.password} }
+      expect(cookies.signed[:user_id]).to eq(user.id)
+      expect(response.status).to be(302)
+    end
+
+    it "doesn't set cookies[:user_id] if invalid user params given, renders" do
+      post :create, { session: { email: user.email, password: "wrong_password"} }
+      expect(cookies.signed[:user_id]).to be_nil
       expect(response.status).to be(200)
-      expect(cookies[:user_id]).to eq(user.id)
     end
   end
 
   context "DELETE destroy" do
     it "sets cookies[:user_id] to nil" do
-      cookies[:user_id] = user.id
-      expect([cookies[:user_id]]).to eq([user.id])
+      cookies.signed[:user_id] = user.id
+      expect([cookies.signed[:user_id]]).to eq([user.id])
       delete :destroy
-      expect([cookies[:user_id]]).to eq([nil])
+      expect([cookies.signed[:user_id]]).to eq([nil])
     end
   end
 
