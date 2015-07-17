@@ -1,5 +1,4 @@
 require_relative 'rails_helper.rb'
-require_relative 'factories.rb'
 
 RSpec.configure do |config|
   config.include Capybara::DSL
