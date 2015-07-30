@@ -1,3 +1,20 @@
 = LetMeIn
 
 This project rocks and uses MIT-LICENSE.
+
+Delivered methods:
+
+1) authentication
+- login(user:, password:, permanent: false)
+- logout
+- current_user
+- logged_in?
+
+2) password_reset
+- set_password_reset_for(user:)
+- password_reset_valid?(password_reset_token:, expiration_time: 2.hours)
+- update_password_for(user:, password:, password_confirmation:, password_reset_token:)
+
+3) tokenizer
+- LetMeIn::Tokenizer.generate_token
+- LetMeIn::Tokenizer.decode_time(token)

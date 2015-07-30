@@ -1,5 +1,5 @@
 class UsersController < ApplicationController
-  before_filter :authenticate, only: :show
+  before_filter :authorize, only: :show
 
   def new
     @user = User.new
@@ -19,7 +19,7 @@ class UsersController < ApplicationController
     params.require(:user).permit(:name, :email, :password, :password_confirmation)
   end
 
-  def authenticate
+  def authorize
     render nothing: true, status: 401 unless logged_in?
   end
 
