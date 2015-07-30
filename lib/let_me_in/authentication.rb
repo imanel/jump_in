@@ -6,8 +6,12 @@ module LetMeIn
     end
 
     def login(user:, password:, permanent: false)
-      set_cookie(user_id: user.id, permanent: permanent) if user && user.authenticate(password)
-      # zwróci nil jak się nie powiedzie
+      return false unless user.authenticate(password)
+      if permanent
+        cookies.permanent.signed[:user_id] = user.id
+      else
+        session[:user_id] = user.id
+      end
     end
 
     def logout
@@ -23,13 +27,5 @@ module LetMeIn
       !!current_user
     end
 
-    private
-    def set_cookie(user_id:, permanent:)
-      if permanent
-        cookies.permanent.signed[:user_id] = user_id
-      else
-        session[:user_id] = user_id
-      end
-    end
   end
 end

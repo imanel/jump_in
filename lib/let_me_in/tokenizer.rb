@@ -1,5 +1,5 @@
 module LetMeIn
-  class Tokenizer
+  module Tokenizer
     require 'base64'
 
     def self.generate_token

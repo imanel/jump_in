@@ -1,4 +1,5 @@
 require_relative 'rails_helper.rb'
+require_relative 'support/common_methods.rb'
 
 RSpec.configure do |config|
   config.include Capybara::DSL

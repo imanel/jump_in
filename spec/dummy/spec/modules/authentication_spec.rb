@@ -18,17 +18,18 @@
 #     end
 
 #     it "logs in when correct password given" do
-#       @object.login(user, user.password)
-#       expect(@cookies.permanent[:user_id]).to eq(user.id)
+#       @object.login(user: user, password: user.password, permanent: true)
+#       expect(@cookies.permanent.signed[:user_id]).to eq(user.id)
 #     end
 
 #     it "doesn't log in when incorrect password given" do
-#       @object.login(user, "wrongpassword")
-#       expect(@cookies.permanent[:user_id]).to_not eq(user.id)
+#       @object.login(user: user, password: "wrongpassword", permanent: true)
+#       expect(@cookies.permanent.signed[:user_id]).to_not eq(user.id)
 #     end
 #   end
 
 #   it "logs out" do
+#     @session = Hash.new
 #     @cookies = Hash.new { }
 #     @cookies[:user_id] = user.id
 #     @object.logout
