@@ -12,11 +12,16 @@ module LetMeIn
       else
         session[:user_id] = user.id
       end
+      true
     end
 
     def logout
-      session[:user_id] = nil
-      cookies[:user_id] = nil
+      if session[:user_id]
+        session.delete :user_id
+      elsif cookies[:user_id]
+        cookies.delete :user_id
+      end
+      true
     end
 
     def current_user
