@@ -15,8 +15,7 @@ module LetMeIn
 
     def update_password_for(user:, password:, password_confirmation:, password_reset_token:)
       if user.password_reset_token == password_reset_token
-        user.update_attributes(password: password, password_confirmation: password_confirmation,
-                               password_reset_token: nil)
+        user.update_attributes(password: password, password_confirmation: password_confirmation, password_reset_token: nil)
       else
         return false
       end
