@@ -7,7 +7,70 @@ end
 describe AuthenticationController, type: :controller do
   let(:user) { FactoryGirl.create(:user) }
 
+  context "#fullstack_login" do
+    it "returns false if user logged_in" do
+      allow(subject).to receive(:logged_in?).and_return(true)
+      expect(subject.fullstack_login(user: user, password: user.password)).to eq(false)
+    end
+
+    it "returns false if user not logged_in but authentication fails" do
+      allow(subject).to receive(:logged_in?).and_return(false)
+      allow(subject).to receive(:authenticate_user).with(user:user, password:'something').and_return(false)
+      expect(subject.fullstack_login(user: user, password:'something')).to eq(false)
+    end
+
+    it "returns true if user not logged_in and authentication successful" do
+      allow(subject).to receive(:logged_in?).and_return(false)
+      allow(subject).to receive(:authenticate_user).and_return(true)
+      allow(subject).to receive(:login).and_return(true)
+      expect(subject.fullstack_login(user: user, password: user.password)).to eq(true)
+    end
+
+    context 'when user not logged_in and authentication successful' do
+      it "calls 'login' with permanent=false for permanent false by default" do
+        allow(subject).to receive(:logged_in?).and_return(false)
+        allow(subject).to receive(:authenticate_user).with(user:user, password:user.password).and_return(true)
+        expect(subject).to receive(:login).with(user:user, permanent:false).exactly(1).times.and_return(true)
+        subject.fullstack_login(user: user, password: user.password)
+      end
+
+      it "calls 'login' with permanent=false for permanent passed as false" do
+        allow(subject).to receive(:logged_in?).and_return(false)
+        allow(subject).to receive(:authenticate_user).with(user:user, password:user.password).and_return(true)
+        expect(subject).to receive(:login).with(user:user, permanent:false).exactly(1).times.and_return(true)
+        subject.fullstack_login(user: user, password: user.password, permanent: false)
+      end
+
+      it "calls 'login' with permanent=true for permanent passed as true" do
+        allow(subject).to receive(:logged_in?).and_return(false)
+        allow(subject).to receive(:authenticate_user).with(user:user, password:user.password).and_return(true)
+        expect(subject).to receive(:login).with(user:user, permanent:true).exactly(1).times.and_return(true)
+        subject.fullstack_login(user: user, password: user.password, permanent: true)
+      end
+    end
+  end
+
   context "#login" do
+    it "sets session when permanent not passed (default)" do
+      subject.login(user: user)
+      expect(session[:user_id]).to eq(user.id)
+      expect(cookies.signed[:user_id]).to eq(nil)
+    end
+
+    it "sets session when permanent passed as false" do
+      subject.login(user: user, permanent: false)
+      expect(session[:user_id]).to eq(user.id)
+      expect(cookies.signed[:user_id]).to eq(nil)
+    end
+
+    it "sets cookies when permanent passed as true" do
+      subject.login(user: user, permanent: true)
+      expect(cookies.signed[:user_id]).to eq(user.id)
+      expect(session[:user_id]).to eq(nil)
+    end
+  end
+
+  context "#authenticate_user" do
     let(:wrong_password)   { 'wrong password' }
     let(:correct_password) { 'correct password' }
 
@@ -16,34 +79,12 @@ describe AuthenticationController, type: :controller do
       allow(user).to receive(:authenticate).with(wrong_password).and_return(false)
     end
 
-    context "when password invalid" do
-      it "returns false when password not correct" do
-        expect(subject.login(user: user, password: wrong_password)).to eq(false)
-      end
+    it "returns true if correct password given" do
+      expect(subject.authenticate_user(user: user, password: wrong_password)).to eq(false)
     end
 
-    context "when password correct" do
-      it "returns true when password not correct" do
-        expect(subject.login(user: user, password: correct_password)).to eq(true)
-      end
-
-      it "sets session when permanent not passed (default)" do
-        subject.login(user: user, password: correct_password)
-        expect(session[:user_id]).to eq(user.id)
-        expect(cookies.signed[:user_id]).to eq(nil)
-      end
-
-      it "sets session when permanent passed as false" do
-        subject.login(user: user, password: correct_password, permanent: false)
-        expect(session[:user_id]).to eq(user.id)
-        expect(cookies.signed[:user_id]).to eq(nil)
-      end
-
-      it "sets cookies when permanent passed as true" do
-        subject.login(user: user, password: correct_password, permanent: true)
-        expect(cookies.signed[:user_id]).to eq(user.id)
-        expect(session[:user_id]).to eq(nil)
-      end
+    it "returns false if wrong password is given" do
+      expect(subject.authenticate_user(user: user, password: wrong_password)).to eq(false)
     end
   end
 
@@ -115,5 +156,4 @@ describe AuthenticationController, type: :controller do
       expect(subject._helper_methods.include? :current_user).to eq(true)
     end
   end
-
 end
