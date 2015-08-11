@@ -7,45 +7,46 @@ end
 describe AuthenticationController, type: :controller do
   let(:user) { FactoryGirl.create(:user) }
 
-  context "#fullstack_login" do
+  context "#let_me_in" do
     it "returns false if user logged_in" do
       allow(subject).to receive(:logged_in?).and_return(true)
-      expect(subject.fullstack_login(user: user, password: user.password)).to eq(false)
+      expect(subject.let_me_in(user: user, password: user.password)).to eq(false)
     end
 
-    it "returns false if user not logged_in but authentication fails" do
+    it "calls detect_strategy with proper hash" do
       allow(subject).to receive(:logged_in?).and_return(false)
-      allow(subject).to receive(:authenticate_user).with(user:user, password:'something').and_return(false)
-      expect(subject.fullstack_login(user: user, password:'something')).to eq(false)
+      expect(subject).to receive(:detect_strategy).with({ password: user.password }).
+        exactly(1).times.and_return(LetMeIn::Authentication::ByPassword)
+      subject.let_me_in(user: user, password: user.password)
     end
 
-    it "returns true if user not logged_in and authentication successful" do
+    it "returns false if user not logged_in and wrong login data provided" do
       allow(subject).to receive(:logged_in?).and_return(false)
-      allow(subject).to receive(:authenticate_user).and_return(true)
-      allow(subject).to receive(:login).and_return(true)
-      expect(subject.fullstack_login(user: user, password: user.password)).to eq(true)
+      expect(subject.let_me_in(user: user, password:'something')).to eq(false)
     end
 
     context 'when user not logged_in and authentication successful' do
+      it "returns true" do
+        allow(subject).to receive(:logged_in?).and_return(false)
+        expect(subject.let_me_in(user: user, password: user.password)).to eq(true)
+      end
+
       it "calls 'login' with permanent=false for permanent false by default" do
         allow(subject).to receive(:logged_in?).and_return(false)
-        allow(subject).to receive(:authenticate_user).with(user:user, password:user.password).and_return(true)
-        expect(subject).to receive(:login).with(user:user, permanent:false).exactly(1).times.and_return(true)
-        subject.fullstack_login(user: user, password: user.password)
+        expect(subject).to receive(:login).with(user:user, permanent:false, expires:nil).exactly(1).times.and_return(true)
+        subject.let_me_in(user: user, password: user.password)
       end
 
       it "calls 'login' with permanent=false for permanent passed as false" do
         allow(subject).to receive(:logged_in?).and_return(false)
-        allow(subject).to receive(:authenticate_user).with(user:user, password:user.password).and_return(true)
-        expect(subject).to receive(:login).with(user:user, permanent:false).exactly(1).times.and_return(true)
-        subject.fullstack_login(user: user, password: user.password, permanent: false)
+        expect(subject).to receive(:login).with(user:user, permanent:false, expires:nil).exactly(1).times.and_return(true)
+        subject.let_me_in(user: user, password: user.password, permanent: false)
       end
 
       it "calls 'login' with permanent=true for permanent passed as true" do
         allow(subject).to receive(:logged_in?).and_return(false)
-        allow(subject).to receive(:authenticate_user).with(user:user, password:user.password).and_return(true)
-        expect(subject).to receive(:login).with(user:user, permanent:true).exactly(1).times.and_return(true)
-        subject.fullstack_login(user: user, password: user.password, permanent: true)
+        expect(subject).to receive(:login).with(user:user, permanent:true, expires:nil).exactly(1).times.and_return(true)
+        subject.let_me_in(user: user, password: user.password, permanent: true)
       end
     end
   end
@@ -53,79 +54,83 @@ describe AuthenticationController, type: :controller do
   context "#login" do
     it "sets session when permanent not passed (default)" do
       subject.login(user: user)
-      expect(session[:user_id]).to eq(user.id)
-      expect(cookies.signed[:user_id]).to eq(nil)
+      expect_session_eq(klass: user.class.to_s, id: user.id)
+      expect_cookies_eq(klass: nil, id: nil)
     end
 
     it "sets session when permanent passed as false" do
       subject.login(user: user, permanent: false)
-      expect(session[:user_id]).to eq(user.id)
-      expect(cookies.signed[:user_id]).to eq(nil)
+      expect_session_eq(klass: user.class.to_s, id: user.id)
+      expect_cookies_eq(klass: nil, id: nil)
     end
 
     it "sets cookies when permanent passed as true" do
       subject.login(user: user, permanent: true)
-      expect(cookies.signed[:user_id]).to eq(user.id)
-      expect(session[:user_id]).to eq(nil)
+      expect_cookies_eq(klass: user.class.to_s, id: user.id)
+      expect_session_eq(klass: nil, id: nil)
+    end
+
+    context 'sets proper value for cookies[:expires]' do
+      before(:each) do
+        @cookies = OpenStruct.new(permanent: nil, signed: nil, let_me_in_class: {}, let_me_in_id: {})
+        allow(subject).to receive(:cookies).and_return(@cookies)
+        allow(@cookies).to receive(:permanent).and_return(@cookies)
+        allow(@cookies).to receive(:signed).and_return(@cookies)
+      end
+
+      it "sets nil if param not passed" do
+        subject.login(user: user, permanent: true)
+        expect(@cookies.signed[:let_me_in_class][:expires]).to be_nil
+        expect(@cookies.signed[:let_me_in_id][:expires]).to be_nil
+      end
+
+      it "sets correct value if param passed" do
+        subject.login(user: user, permanent: true, expires: 2.hours)
+        expect(@cookies.signed[:let_me_in_class][:expires]).to eq(@cookies.signed[:let_me_in_id][:expires])
+        expect(@cookies.signed[:let_me_in_class][:expires]).to be_between(Time.now + 1.hours, Time.now + 3.hours)
+        expect(@cookies.signed[:let_me_in_id][:expires]).to    be_between(Time.now + 1.hours, Time.now + 3.hours)
+      end
     end
   end
 
-  context "#authenticate_user" do
-    let(:wrong_password)   { 'wrong password' }
-    let(:correct_password) { 'correct password' }
-
-    before(:each) do
-      allow(user).to receive(:authenticate).with(correct_password).and_return(true)
-      allow(user).to receive(:authenticate).with(wrong_password).and_return(false)
+  context "#let_me_out" do
+    it "clears session when session set" do
+      set_session(user)
+      expect_session_eq(klass: user.class.to_s, id: user.id)
+      subject.let_me_out
+      expect_session_eq(klass: nil, id: nil)
     end
 
-    it "returns true if correct password given" do
-      expect(subject.authenticate_user(user: user, password: wrong_password)).to eq(false)
-    end
-
-    it "returns false if wrong password is given" do
-      expect(subject.authenticate_user(user: user, password: wrong_password)).to eq(false)
-    end
-  end
-
-  context "#logout" do
-    it "clears :user_id in session when session set" do
-      session[:user_id] = user.id
-      expect {
-        subject.logout
-      }.to change{ session[:user_id] }.from(user.id).to(nil)
-    end
-
-    it "clears :user_id in cookies when cookies set" do
-      cookies.permanent.signed[:user_id] = user.id
-      expect {
-        subject.logout
-      }.to change{ cookies.permanent.signed[:user_id] }.from(user.id).to(nil)
+    it "clears cookies when cookies set" do
+      set_cookies(user, nil)
+      expect_cookies_eq(klass: user.class.to_s, id: user.id)
+      subject.let_me_out
+      expect_cookies_eq(klass: nil, id: nil)
     end
 
     it "returns true if logged out from session" do
-      session[:user_id] = user.id
-      expect(subject.logout).to eq(true)
+      set_session(user)
+      expect(subject.let_me_out).to eq(true)
     end
 
     it "returns true if logged out from cookies" do
-      cookies.permanent.signed[:user_id] = user.id
-      expect(subject.logout).to eq(true)
+      set_cookies(user, nil)
+      expect(subject.let_me_out).to eq(true)
     end
 
     it "returns true if logged out from empty session & cookies" do
-      expect(subject.logout).to eq(true)
+      expect(subject.let_me_out).to eq(true)
     end
   end
 
   context "#current_user" do
     it "returns user based on session" do
-      subject.session[:user_id] = user.id
+      set_session(user)
       expect(subject.current_user).to eq(user)
     end
 
     it "returns user based on cookies" do
-      cookies.signed[:user_id] = user.id
+      set_cookies(user, nil)
       expect(subject.current_user).to eq(user)
     end
 
@@ -136,21 +141,17 @@ describe AuthenticationController, type: :controller do
 
   context "#logged_in?" do
     it "returns true if current user is set in session" do
-      session[:user_id] = user.id
+      set_session(user)
       expect(subject.logged_in?).to eq(true)
     end
 
     it "returns true if current user is set in cookies" do
-      cookies.permanent.signed[:user_id] = user.id
+      set_cookies(user, nil)
       expect(subject.logged_in?).to eq(true)
-    end
-
-    it "returns false if no current user" do
-      expect(subject.logged_in?).to eq(false)
     end
   end
 
-  context "#helper_method" do
+  context "#helper_methods" do
     it "includes current_user and logged_in?" do
       expect(subject._helper_methods.include? :logged_in?).to eq(true)
       expect(subject._helper_methods.include? :current_user).to eq(true)
