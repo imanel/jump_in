@@ -2,8 +2,6 @@ PATH
   remote: .
   specs:
     let_me_in (0.0.1)
-      bcrypt
-      rails (~> 4.2.3)
 
 GEM
   remote: https://rubygems.org/
@@ -143,12 +141,14 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  bcrypt
   byebug
   capybara
   capybara-webkit
   database_cleaner
   factory_girl_rails
   let_me_in!
+  rails (~> 4.2.3)
   rake
   rspec-rails
   sqlite3

@@ -2,9 +2,9 @@ module LetMeIn
   module Authentication
 
     class Strategy
-      def initialize(user:, hash:)
+      def initialize(user:, params:)
         @user = user
-        @hash = hash
+        @params = params
       end
 
       def authenticate_user

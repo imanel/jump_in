@@ -9,42 +9,42 @@ describe AuthenticationController, type: :controller do
 
   context "#let_me_in" do
     it "returns false if user logged_in" do
-      allow(subject).to receive(:logged_in?).and_return(true)
+      allow_to_receive_logged_in_and_return(true)
       expect(subject.let_me_in(user: user, password: user.password)).to eq(false)
     end
 
-    it "calls detect_strategy with proper hash" do
-      allow(subject).to receive(:logged_in?).and_return(false)
-      expect(subject).to receive(:detect_strategy).with({ password: user.password }).
-        exactly(1).times.and_return(LetMeIn::Authentication::ByPassword)
+    it "calls detect_strategy with proper params" do
+      allow_to_receive_logged_in_and_return(false)
+      expect(subject).to receive(:detected_strategy).with(user: user, params: { password: user.password }).
+        exactly(1).times.and_return(LetMeIn::Authentication::ByPassword.new(user: user, params: { password: user.password }))
       subject.let_me_in(user: user, password: user.password)
     end
 
     it "returns false if user not logged_in and wrong login data provided" do
-      allow(subject).to receive(:logged_in?).and_return(false)
+      allow_to_receive_logged_in_and_return(false)
       expect(subject.let_me_in(user: user, password:'something')).to eq(false)
     end
 
     context 'when user not logged_in and authentication successful' do
       it "returns true" do
-        allow(subject).to receive(:logged_in?).and_return(false)
+        allow_to_receive_logged_in_and_return(false)
         expect(subject.let_me_in(user: user, password: user.password)).to eq(true)
       end
 
       it "calls 'login' with permanent=false for permanent false by default" do
-        allow(subject).to receive(:logged_in?).and_return(false)
+        allow_to_receive_logged_in_and_return(false)
         expect(subject).to receive(:login).with(user:user, permanent:false, expires:nil).exactly(1).times.and_return(true)
         subject.let_me_in(user: user, password: user.password)
       end
 
       it "calls 'login' with permanent=false for permanent passed as false" do
-        allow(subject).to receive(:logged_in?).and_return(false)
+        allow_to_receive_logged_in_and_return(false)
         expect(subject).to receive(:login).with(user:user, permanent:false, expires:nil).exactly(1).times.and_return(true)
         subject.let_me_in(user: user, password: user.password, permanent: false)
       end
 
       it "calls 'login' with permanent=true for permanent passed as true" do
-        allow(subject).to receive(:logged_in?).and_return(false)
+        allow_to_receive_logged_in_and_return(false)
         expect(subject).to receive(:login).with(user:user, permanent:true, expires:nil).exactly(1).times.and_return(true)
         subject.let_me_in(user: user, password: user.password, permanent: true)
       end
@@ -54,20 +54,17 @@ describe AuthenticationController, type: :controller do
   context "#login" do
     it "sets session when permanent not passed (default)" do
       subject.login(user: user)
-      expect_session_eq(klass: user.class.to_s, id: user.id)
-      expect_cookies_eq(klass: nil, id: nil)
+      expect_only_session_set_for(user)
     end
 
     it "sets session when permanent passed as false" do
       subject.login(user: user, permanent: false)
-      expect_session_eq(klass: user.class.to_s, id: user.id)
-      expect_cookies_eq(klass: nil, id: nil)
+      expect_only_session_set_for(user)
     end
 
     it "sets cookies when permanent passed as true" do
       subject.login(user: user, permanent: true)
-      expect_cookies_eq(klass: user.class.to_s, id: user.id)
-      expect_session_eq(klass: nil, id: nil)
+      expect_only_cookies_set_for(user)
     end
 
     context 'sets proper value for cookies[:expires]' do
@@ -78,17 +75,17 @@ describe AuthenticationController, type: :controller do
         allow(@cookies).to receive(:signed).and_return(@cookies)
       end
 
-      it "sets nil if param not passed" do
+      it "sets 20 years if param not passed" do
         subject.login(user: user, permanent: true)
-        expect(@cookies.signed[:let_me_in_class][:expires]).to be_nil
-        expect(@cookies.signed[:let_me_in_id][:expires]).to be_nil
+        expect(@cookies.signed[:let_me_in_class][:expires]).to be_between(Time.now + 19.years, Time.now + 21.years)
+        expect(@cookies.signed[:let_me_in_id][:expires]).to be_between(Time.now + 19.years, Time.now + 21.years)
       end
 
       it "sets correct value if param passed" do
         subject.login(user: user, permanent: true, expires: 2.hours)
         expect(@cookies.signed[:let_me_in_class][:expires]).to eq(@cookies.signed[:let_me_in_id][:expires])
         expect(@cookies.signed[:let_me_in_class][:expires]).to be_between(Time.now + 1.hours, Time.now + 3.hours)
-        expect(@cookies.signed[:let_me_in_id][:expires]).to    be_between(Time.now + 1.hours, Time.now + 3.hours)
+        expect(@cookies.signed[:let_me_in_id][:expires]).to be_between(Time.now + 1.hours, Time.now + 3.hours)
       end
     end
   end

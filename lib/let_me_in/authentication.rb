@@ -11,44 +11,66 @@ module LetMeIn
     end
 
 # LOGGING IN
-    def let_me_in(user:, permanent: false, expires: nil, **hash)
+    def let_me_in(user:, permanent: false, expires: nil, **params)
       return false if logged_in?
-      strategy = detect_strategy(hash)
-      if strategy.new(user: user, hash: hash).authenticate_user
+      if authenticate_by_strategy(user: user, params: params)
         login(user: user, permanent: permanent, expires: expires)
       else
         return false
       end
     end
 
+    def authenticate_by_strategy(user: user, params: params)
+      if strategy = detected_strategy(user: user, params: params)
+        strategy.authenticate_user
+      else
+        false
+      end
+    end
+
     def login(user:, permanent: false, expires: nil)
       if permanent
-        expires = Time.now + expires if expires
-        cookies.permanent.signed[:let_me_in_class] = { :value => user.class.to_s, :expires => expires }
-        cookies.permanent.signed[:let_me_in_id]    = { :value => user.id, :expires => expires }
+        set_cookies(user: user, expires: expires)
       else
-        session[:let_me_in_class] = user.class.to_s
-        session[:let_me_in_id]    = user.id
+        set_session(user: user)
       end
       true
+    end
+
+    def set_cookies(user: user, expires: expires)
+      expires = (expires || 20.years).from_now
+      cookies.signed[:let_me_in_class] = { value: user.class.to_s, expires: expires }
+      cookies.signed[:let_me_in_id]    = { value: user.id, expires: expires }
+    end
+
+    def set_session(user: user)
+      session[:let_me_in_class] = user.class.to_s
+      session[:let_me_in_id]    = user.id
     end
 
 # LOGGING OUT
     def let_me_out
       if session[:let_me_in_id] && session[:let_me_in_class]
-        session.delete :let_me_in_class
-        session.delete :let_me_in_id
+        delete_session
       elsif cookies[:let_me_in_id] && cookies[:let_me_in_class]
-        cookies.delete :let_me_in_class
-        cookies.delete :let_me_in_id
+        delete_cookies
       end
       true
     end
 
+    def delete_cookies
+      cookies.delete :let_me_in_class
+      cookies.delete :let_me_in_id
+    end
+
+    def delete_session
+      session.delete :let_me_in_class
+      session.delete :let_me_in_id
+    end
+
 # HELPER METHODS
     def current_user
-      return nil unless (session[:let_me_in_id] && session[:let_me_in_class]) ||
-                        (cookies.signed[:let_me_in_id] && cookies.signed[:let_me_in_class])
+      return nil unless session_or_cookies_set?
       klass = (session[:let_me_in_class] || cookies.signed[:let_me_in_class]).constantize
       id    = (session[:let_me_in_id] || cookies.signed[:let_me_in_id])
       @current_user ||= klass.find_by_id(id)
@@ -59,10 +81,17 @@ module LetMeIn
     end
 
     private
-
-    def detect_strategy(hash)
-      STRATEGIES.detect { |strategy| strategy.detected?(hash) }
+    def session_or_cookies_set?
+      (session[:let_me_in_id] && session[:let_me_in_class]) ||
+      (cookies.signed[:let_me_in_id] && cookies.signed[:let_me_in_class])
     end
 
+    def detected_strategy(user: user, params: params)
+      if strategy = STRATEGIES.detect { |strategy| strategy.detected?(params) }
+        strategy.new(user: user, params: params)
+      else
+        false
+      end
+    end
   end
 end

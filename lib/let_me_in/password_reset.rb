@@ -3,7 +3,11 @@ module LetMeIn
 
 # CREATING TOKEN
     def set_password_reset_for(user:, token: nil)
-      token_uniq_or_empty?(user: user, token: token) ? set_token(user: user, token: token) : false
+      if token_uniq_or_empty?(user: user, token: token)
+        set_token(user: user, token: token)
+      else
+        false
+      end
     end
 
     def set_token(user:, token:)
@@ -39,7 +43,7 @@ module LetMeIn
       if token_correct?(user_token: user.password_reset_token, received_token: password_reset_token)
         user.update_attributes(password: password, password_confirmation: password_confirmation, password_reset_token: nil)
       else
-        return false
+        false
       end
     end
 

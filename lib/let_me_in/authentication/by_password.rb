@@ -1,19 +1,13 @@
 module LetMeIn
   module Authentication
     class ByPassword < Strategy
-
-      def self.detected?(hash)
-        hash.include? :password
+      def self.detected?(params)
+        params.include? :password
       end
 
       def authenticate_user
-        if @user.authenticate(@hash[:password])
-          return true
-        else
-          return false
-        end
+        @user.authenticate(@params[:password]) ? true : false
       end
-
     end
   end
 end

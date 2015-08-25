@@ -11,6 +11,20 @@ gemspec
 # your gem to rubygems.org.
 
 # To use a debugger
-gem 'byebug', group: [:development, :test]
-gem 'timecop', group: :test
 
+group :development, :test do
+  gem 'byebug'
+  gem 'rails', '~> 4.2.3'
+  gem 'sqlite3'
+  gem 'bcrypt'
+  gem 'rake'
+  gem 'rspec-rails'
+  gem 'factory_girl_rails'
+  gem 'capybara'
+  gem 'capybara-webkit'
+  gem 'database_cleaner'
+end
+
+group :test do
+  gem 'timecop'
+end
