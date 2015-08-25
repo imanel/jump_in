@@ -1,30 +1,54 @@
 module LetMeIn
   module PasswordReset
 
-    def create_password_reset_for(user:, mailer:)
-      # ustawia atrybuty do resetu
-      # wysyła maila (mail jest z linkiem do edycji i w paramsach przekazuje token)
+# CREATING TOKEN
+    def set_password_reset_for(user:, token: nil)
+      if token_uniq_or_empty?(user: user, token: token)
+        set_token(user: user, token: token)
+      else
+        false
+      end
     end
 
-    def update_password_reset_for(user:, password:, password_confimration:, password_reset_token:, email:)
-      # sprawdza, czy token wciąż ważny
-      # sprawdza, czy email i token należą do jednego usera
-       # i jeśli tak, zmienia hasło
+    def set_token(user:, token:)
+      token ||= generate_unique_token_for(user: user)
+      user.update_attribute(:password_reset_token, token)
     end
 
-    def set_password_reset(user)
-      # ustaw reset_digest (wykorzystując Tokenizer, tu trzeba pamiętać o sprawdzeniu,
-      # czy nie istnieje już użytkownik z takim stringiem przypisanym; nie możemy się tu
-      # odwołać się bezpośrednio do klasy User - bo ona może się nazywać inaczej)
-      # ustaw reset_sent_at
+    def generate_unique_token_for(user:)
+      loop do
+        token = generate_token
+        break token if token_uniq?(user: user, token: token)
+      end
     end
 
-    def send_password_reset_email(user, mailer)
-      # zakładamy na razie, że mailer będzie gotowy w aplikacji i będzie miał metodę password_reset
+    def generate_token
+      LetMeIn::Tokenizer.generate_token
     end
 
-    def password_reset_expired?(user)
-      # default ma być taki, że token jest ważny przez dwie godziny
+    def token_uniq_or_empty?(user:, token:)
+      (token && token_uniq?(user: user, token: token)) || token.nil?
+    end
+
+    def token_uniq?(user:, token:)
+      !user.class.where(password_reset_token: token).exists?
+    end
+
+# RECEIVING TOKEN
+    def password_reset_valid?(password_reset_token:, expiration_time: 2.hours)
+      LetMeIn::Tokenizer.decode_time(password_reset_token) > Time.now - expiration_time
+    end
+
+    def update_password_for(user:, password:, password_confirmation:, password_reset_token:)
+      if token_correct?(user_token: user.password_reset_token, received_token: password_reset_token)
+        user.update_attributes(password: password, password_confirmation: password_confirmation, password_reset_token: nil)
+      else
+        false
+      end
+    end
+
+    def token_correct?(user_token:, received_token:)
+      user_token == received_token
     end
   end
 end

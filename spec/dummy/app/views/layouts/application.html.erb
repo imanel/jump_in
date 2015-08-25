@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+</head>
+<body>
+  <%= link_to "Log out", logout_path, method: :delete %>
+
+  <% flash.each do |type, message| %>
+    <div class="alert flash <%= type %>">
+      <%= message %>
+    </div>
+  <% end %>
+
+  <%= yield %>
+</body>
+</html>
+
+

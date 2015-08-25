@@ -1,28 +1,34 @@
 class PasswordResetsController < ApplicationController
-  before_filter :check_reset_expiration, only: [:update, :edit]
+
+  before_filter :authorize_by_token, :only => [:edit, :update]
 
   def create
-    @user = User.find_by(email: params[:password_reset][:email].downcase)
-    create_password_reset_for(user: @user, mailer: UserMailer)
-  end
-
-  def edit
+    @user = User.find_by(email: params[:email].downcase)
+    if set_password_reset_for(user: @user)
+      SystemMailer.password_reset(@user).deliver
+      redirect_to login_path
+    else
+      render :new
+    end
   end
 
   def update
-    update_password_reset_for(user: @user, password: user_params[:password],
-      password_confirmation: user_params[:password_confirmation],
-      password_reset_token: user_params[:password_reset_token], email: user_params[:email])
-    login(user: @user, password: user_params[:password]) if user
+    user = User.where(password_reset_token: params[:token]).first
+    if user && update_password_for(user: user,
+                                   password: params[:password],
+                                   password_confirmation: params[:password_confirmation],
+                                   password_reset_token: params[:token])
+      redirect_to login_path
+    else
+      render :edit
+    end
   end
 
   private
-
-  def user_params
-    params.require(:user).permit(:password, :password_confirmation, :email, :password_reset_token)
-  end
-
-  def check_reset_expiration
-    password_reset_expired?(user)
+  def authorize_by_token
+    unless password_reset_valid?(password_reset_token: params[:token])
+      flash[:error] = "Sorry, your password-reset-token is too old"
+      redirect_to new_password_resets_path
+    end
   end
 end
