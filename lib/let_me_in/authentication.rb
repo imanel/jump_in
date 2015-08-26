@@ -20,7 +20,7 @@ module LetMeIn
       end
     end
 
-    def authenticate_by_strategy(user: user, params: params)
+    def authenticate_by_strategy(user:, params:)
       if strategy = detected_strategy(user: user, params: params)
         strategy.authenticate_user
       else
@@ -37,13 +37,13 @@ module LetMeIn
       true
     end
 
-    def set_cookies(user: user, expires: expires)
+    def set_cookies(user:, expires:)
       expires = (expires || 20.years).from_now
       cookies.signed[:let_me_in_class] = { value: user.class.to_s, expires: expires }
       cookies.signed[:let_me_in_id]    = { value: user.id, expires: expires }
     end
 
-    def set_session(user: user)
+    def set_session(user:)
       session[:let_me_in_class] = user.class.to_s
       session[:let_me_in_id]    = user.id
     end
