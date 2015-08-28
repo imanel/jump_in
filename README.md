@@ -3,8 +3,7 @@
 LetMeIn provides a set of methods that make building login & logout functionality really simple, with only few steps. It takes care of setting cookies or session and has it's own tokenizer. Moreover, it allows to choose authentication strategy which fits your application the best.
 
 ## Links:
-- [Source Code]()
-- Source Code
+- [Source Code](https://github.com/KatarzynaT-B/let_me_in)
 
 
 ## Installation
