@@ -22,7 +22,7 @@
 #   end
 
 #   it 'doest allow for password reset if token too old' do
-#     user.update_attribute(:password_reset_token, Base64.encode64("#{SecureRandom.hex(10)}.#{5.days.ago}"))
+#     user.update_attribute(:password_reset_token, Base64.urlsafe_encode64("#{SecureRandom.hex(10)}.#{5.days.ago}"))
 #     visit edit_password_resets_path(token: user.password_reset_token)
 #     expect(page).to have_content("password-reset-token is too old")
 #   end

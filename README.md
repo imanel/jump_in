@@ -35,7 +35,17 @@ This module provides complex `jump_in` method, two basic methods: `login` and `j
 ```
 jump_in(user:, permanent: false, expires: nil, **params)
 ```
-authenticates object and loggs it in (using `login` method). The authentication strategy depends on the passed params (detaild description below).
+authenticates object and loggs it in (using `login` method). The authentication strategy depends on the passed params (detaild description below). Suggested usage of this method is (inside `SessionsController`):
+```
+def create
+  @student = Student.find(...)
+  if @student && jump_in(user: @student, permanent: true, expires: 5.hours, password: params[:password])
+    redirect_to ...
+  else
+    render :new
+  end
+end
+```
 ```
 login(user:, permanent: false, expires: nil)
 ```

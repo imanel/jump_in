@@ -12,7 +12,7 @@ describe JumpIn::Tokenizer do
   context ".decode_time" do
     it "decodes time correctly" do
       time = Time.now.xmlschema
-      token = Base64.encode64 [SecureRandom.hex(12), time].join(JumpIn::Tokenizer::DELIMITER)
+      token = Base64.urlsafe_encode64 [SecureRandom.hex(12), time].join(JumpIn::Tokenizer::DELIMITER)
       expect(JumpIn::Tokenizer.decode_time(token)).to eq(time)
     end
   end
