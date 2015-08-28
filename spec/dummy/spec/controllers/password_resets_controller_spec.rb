@@ -24,7 +24,7 @@
 
 #   context "PATCH update" do
 #     before(:each) {
-#       user.update_attributes(password_reset_token: LetMeIn::Tokenizer.generate_token)
+#       user.update_attributes(password_reset_token: JumpIn::Tokenizer.generate_token)
 #     }
 
 #     it "before_filter redirects for token too old" do
