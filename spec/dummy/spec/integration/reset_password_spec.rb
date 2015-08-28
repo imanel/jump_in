@@ -12,7 +12,7 @@
 #   end
 
 #   it 'redirects to login path after password update' do
-#     user.update_attribute(:password_reset_token, LetMeIn::Tokenizer.generate_token)
+#     user.update_attribute(:password_reset_token, JumpIn::Tokenizer.generate_token)
 #     visit edit_password_resets_path(token: user.password_reset_token)
 #     expect(page).to have_content("Edit for PasswordReset")
 #     fill_in "password", with: 'new_password'
@@ -28,7 +28,7 @@
 #   end
 
 #   it 'displays edit page when password does not match password_confirmation' do
-#     user.update_attribute(:password_reset_token, LetMeIn::Tokenizer.generate_token)
+#     user.update_attribute(:password_reset_token, JumpIn::Tokenizer.generate_token)
 #     visit edit_password_resets_path(token: user.password_reset_token)
 #     expect(page).to have_content('Edit for PasswordReset')
 #     fill_in 'password', with: 'new_password'

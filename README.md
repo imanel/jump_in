@@ -1,39 +1,39 @@
-# LetMeIn
+# JumpIn
 
-LetMeIn provides a set of methods that make building login & logout functionality really simple, with only few steps. It takes care of setting cookies or session and has it's own tokenizer. Moreover, it allows to choose authentication strategy which fits your application the best.
+JumpIn provides a set of methods that make building login & logout functionality really simple, with only few steps. It takes care of setting cookies or session and has it's own tokenizer. Moreover, it allows to choose authentication strategy which fits your application the best.
 
 ## Links:
-- [Source Code](https://github.com/KatarzynaT-B/let_me_in)
+- [Source Code](https://github.com/KatarzynaT-B/jump_in)
 
 
 ## Installation
 ```
-gem 'let_me_in'
+gem 'jump_in'
 ```
 Don't forget to run:
 ```
 bundle install
 ```
-In order to use LetMeIn you need to include modules of your choice in `application_controller.rb` or in a controller responsible for a particular functionality. For example in case of logging in with password and using password reset functionality you'll need:
+In order to use JumpIn you need to include modules of your choice in `application_controller.rb` or in a controller responsible for a particular functionality. For example in case of logging in with password and using password reset functionality you'll need:
 ```
 class ApplicationController < ActionController::Base
-  include LetMeIn::Authentication
-  include LetMeIn::PasswordReset
+  include JumpIn::Authentication
+  include JumpIn::PasswordReset
 end
 ```
-Here is a complete list of modules that LetMeIn provides:
-* `LetMeIn::Authentication`
-* `LetMeIn::PasswordReset`
-* `LetMeIn::Tokenizer` (included by default when `LetMeIn::PasswordReset` is included)
+Here is a complete list of modules that JumpIn provides:
+* `JumpIn::Authentication`
+* `JumpIn::PasswordReset`
+* `JumpIn::Tokenizer` (included by default when `JumpIn::PasswordReset` is included)
 
 
 ## Authentication
 ```
-include LetMeIn::Authentication
+include JumpIn::Authentication
 ```
-This module provides complex `let_me_in` method, two basic methods: `login` and `let_me_out`, as well as two helper methods: `current_user` and `logged_in?` and extracted methods to be used according to your own preferences.
+This module provides complex `jump_in` method, two basic methods: `login` and `jump_out`, as well as two helper methods: `current_user` and `logged_in?` and extracted methods to be used according to your own preferences.
 ```
-let_me_in(user:, permanent: false, expires: nil, **params)
+jump_in(user:, permanent: false, expires: nil, **params)
 ```
 authenticates object and loggs it in (using `login` method). The authentication strategy depends on the passed params (detaild description below).
 ```
@@ -43,9 +43,9 @@ sets session for the given user (object) if `permanent` is not passed or is pass
 
 It sets `cookies.signed` if `permanent` is passed as `true`. Default expiration time is set to 20 years (same as `cookies.permanent`). It is also possible to set custom expiration time for the cookies, e.g. `login(user: @student, permanent: true, expires: 24.hours)`.
 
-If you're not using the comprehensive method `let_me_in`, it is suggested to use `login` method as follows: `login(user: @student) unless logged_in?`
+If you're not using the comprehensive method `jump_in`, it is suggested to use `login` method as follows: `login(user: @student) unless logged_in?`
 ```
-let_me_out
+jump_out
 ```
 logs out user (it clears session or cookies depending on the previous choice of login strategy). It takes no arguments.
 
@@ -60,19 +60,19 @@ logs out user (it clears session or cookies depending on the previous choice of 
 
 
 #### Authentication Strategies
-At the moment LetMeIn provides one strategy: `ByPassword`. Strategy `ByOmniAuth` is in progress, strategy `ByToken` is in our minds, other strategies are more then welcome to come from your suggestions!
+At the moment JumpIn provides one strategy: `ByPassword`. Strategy `ByOmniAuth` is in progress, strategy `ByToken` is in our minds, other strategies are more then welcome to come from your suggestions!
 
 
 #### Authentication by password
-LetMeIn authentication by password uses `has_secure_password`'s authenticate method. Therefore you need to add column `password_digest` to your model's tabel and add: `has_secure_password` in the model to be authenticated. For example:
+JumpIn authentication by password uses `has_secure_password`'s authenticate method. Therefore you need to add column `password_digest` to your model's tabel and add: `has_secure_password` in the model to be authenticated. For example:
 ```
 class YourClassName < ActiveRecord::Base
   has_secure_password
 end
 ```
-This strategy is being used when params passed to `let_me_in` or `authenticate_by_strategy` include `:password`, therefore you should use it this way:
+This strategy is being used when params passed to `jump_in` or `authenticate_by_strategy` include `:password`, therefore you should use it this way:
 ```
-let_me_in(user: @student, permanent: true, expires: 30.days, password: params[:password])
+jump_in(user: @student, permanent: true, expires: 30.days, password: params[:password])
 ```
 What you need to pass is the object to be authenticated (and logged in), password received in params and optionally: `permanent` and `expires` parameters (as explained in `login` method description).
 
@@ -97,9 +97,9 @@ end
 
 ## Password Reset
 ```
-include LetMeIn::PasswordReset
+include JumpIn::PasswordReset
 ```
-This functionality requires two columns in your model's table: `password_digest` and `letmein_reset_token`. With these attributes your application is ready to use the following methods:
+This functionality requires two columns in your model's table: `password_digest` and `jumpin_reset_token`. With these attributes your application is ready to use the following methods:
 * `set_password_reset_for`
 * `set_token`
 * `generate_unique_token_for`
@@ -113,23 +113,23 @@ There are two main and comprehensive methods that cover most of the work: `set_p
 ```
 set_password_reset_for(user:, token: nil)
 ```
-takes one required argument: an object that the password reset is performed for, passed as a named parameter `user` (for example: `set_password_reset_for(user: @student)`) and sets a unique token as the object's attribute `letmein_reset_token`. The token is generated by `LetMeIn::Tokenizer` described below.
+takes one required argument: an object that the password reset is performed for, passed as a named parameter `user` (for example: `set_password_reset_for(user: @student)`) and sets a unique token as the object's attribute `jumpin_reset_token`. The token is generated by `JumpIn::Tokenizer` described below.
 
-If the optional parameter is passed (`token`, e.g. `set_password_reset_for(user: @user, token: your_token)`) the method checks uniqueness of the given token and sets it as the object's `letmein_reset_token`. It returns `false` if the given token is not unique.
+If the optional parameter is passed (`token`, e.g. `set_password_reset_for(user: @user, token: your_token)`) the method checks uniqueness of the given token and sets it as the object's `jumpin_reset_token`. It returns `false` if the given token is not unique.
 
 The subsidiary methods are:
-* `set_token(user:, token:)` - updates object's attribute `letmein_reset_token` to the given token, does not check it's uniqueness,
-* `generate_unique_token_for(user:)` - generates unique token by means of `LetMeIn::Tokenizer`, the token is unique in scope of the passed object's class,
+* `set_token(user:, token:)` - updates object's attribute `jumpin_reset_token` to the given token, does not check it's uniqueness,
+* `generate_unique_token_for(user:)` - generates unique token by means of `JumpIn::Tokenizer`, the token is unique in scope of the passed object's class,
 * `token_uniq?(user:, token:)` - checks uniqueness of the given token in scope of the passed object's class.
 
 ```
 password_reset_valid?(password_reset_token:, expiration_time: 2.hours)
 ```
-checkes wheather the given token is still valid (has not expired). Returns `true` or `false`. Default expiration time is 2 hours. You can pass any custom value of your choice as well. This method is suitable for any token generated with `LetMeIn::Tokenizer`.
+checkes wheather the given token is still valid (has not expired). Returns `true` or `false`. Default expiration time is 2 hours. You can pass any custom value of your choice as well. This method is suitable for any token generated with `JumpIn::Tokenizer`.
 ```
 update_password_for(user:, password:, password_confirmation:, password_reset_token:)
 ```
-verifies correctness of the given token (it's identity with the object's `letmein_reset_token`) and updates object's `password_digest`. Returns `false` if the token is incorrect.
+verifies correctness of the given token (it's identity with the object's `jumpin_reset_token`) and updates object's `password_digest`. Returns `false` if the token is incorrect.
 
 Suggested usage is: (unless expiration time for tokens is not what you need)
 ```
@@ -140,16 +140,16 @@ else
 end
 ```
 And the subsidiary method:
-* `token_correct?(user_token:, received_token:)` - verifies identity if the object's token and the received token, e.g. `token_correct?(user_token: @student.letmein_reset_token, received_token: params[:token]`.
+* `token_correct?(user_token:, received_token:)` - verifies identity if the object's token and the received token, e.g. `token_correct?(user_token: @student.jumpin_reset_token, received_token: params[:token]`.
 
 
 ## Tokenizer
 ```
-include LetMeIn::Tokenizer
+include JumpIn::Tokenizer
 ```
 As mentioned above, this module is included by default with the password reset functionality. Thus in most cases there is no need to include it explicitly. However, in case your application doesn't use the password reset functionality but it needs the tokenizer somewhere else, you're free to include this module seperately.
-`LetMeIn::Tokenizer` provides two methods that you might need: `LetMeIn::Tokenizer.generate_token` and `LetMeIn::Tokenizer.decode_time`.
-* `LetMeIn::Tokenizer.generate_token`
+`JumpIn::Tokenizer` provides two methods that you might need: `JumpIn::Tokenizer.generate_token` and `JumpIn::Tokenizer.decode_time`.
+* `JumpIn::Tokenizer.generate_token`
  generates safe token by means of `Base64` & `SecureRandom`. It contains encrypted token generation time.
-* `LetMeIn::Tokenizer.decode_time(token)`
+* `JumpIn::Tokenizer.decode_time(token)`
  decodes the token generation time from the token. It takes single parameter (that is the `token`) and returns a `datetime` object. It can be used to verify wheather the token is still valid (has not expired).

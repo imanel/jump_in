@@ -1,6 +1,6 @@
 require 'base64'
 
-module LetMeIn
+module JumpIn
   module Tokenizer
     DELIMITER = '.'.freeze
 

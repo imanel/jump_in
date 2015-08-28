@@ -1,4 +1,4 @@
-module LetMeIn
+module JumpIn
   module Authentication
 
     class Strategy

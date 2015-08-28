@@ -1,4 +1,4 @@
-module LetMeIn
+module JumpIn
   module PasswordReset
 
 # CREATING TOKEN
@@ -23,7 +23,7 @@ module LetMeIn
     end
 
     def generate_token
-      LetMeIn::Tokenizer.generate_token
+      JumpIn::Tokenizer.generate_token
     end
 
     def token_uniq_or_empty?(user:, token:)
@@ -36,7 +36,7 @@ module LetMeIn
 
 # RECEIVING TOKEN
     def password_reset_valid?(password_reset_token:, expiration_time: 2.hours)
-      LetMeIn::Tokenizer.decode_time(password_reset_token) > Time.now - expiration_time
+      JumpIn::Tokenizer.decode_time(password_reset_token) > Time.now - expiration_time
     end
 
     def update_password_for(user:, password:, password_confirmation:, password_reset_token:)

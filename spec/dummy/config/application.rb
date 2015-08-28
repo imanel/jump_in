@@ -9,7 +9,7 @@ require "sprockets/railtie"
 # require "rails/test_unit/railtie"
 
 Bundler.require(*Rails.groups)
-require "let_me_in"
+require "jump_in"
 
 module Dummy
   class Application < Rails::Application
