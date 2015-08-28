@@ -140,7 +140,7 @@ describe PasswordResetController, type: :controller do
 
   context "#update_password_for" do
     let(:new_password) { 'new_secret_password'}
-    let(:old_password_digest) { user.password_digest }
+    let!(:old_password_digest) { user.password_digest }
 
     it "updates password if token belongs to user and is not too old" do
       user.update_attribute(:password_reset_token, LetMeIn::Tokenizer.generate_token)
